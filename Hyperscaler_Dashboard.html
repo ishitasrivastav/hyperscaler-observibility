@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hyperscaler Data Observability | Customer Success Program</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ── Power BI exact color tokens ── */
+:root {
+  --pbi-bg: #f3f2f1;
+  --pbi-canvas: #f3f2f1;
+  --pbi-card: #ffffff;
+  --pbi-border: #e0dfde;
+  --pbi-text: #252423;
+  --pbi-text2: #605e5c;
+  --pbi-text3: #a19f9d;
+  --pbi-blue: #118dff;
+  --pbi-blue2: #12239e;
+  --pbi-green: #107c10;
+  --pbi-green2: #498205;
+  --pbi-yellow: #ffaa44;
+  --pbi-red: #d13438;
+  --pbi-orange: #e97132;
+  --pbi-teal: #0099bc;
+  --pbi-purple: #8764b8;
+  --pbi-header-bg: #252423;
+  --pbi-slicer-active: #0078d4;
+  --pbi-hover: #edebe9;
+  --aws: #e8891c;
+  --azure: #0078d4;
+  --gcp: #1a8754;
+  --amer: #0078d4;
+  --emea: #8764b8;
+  --apac: #0099bc;
+  font-size: 12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, sans-serif;
+  background: var(--pbi-bg);
+  color: var(--pbi-text);
+  font-size: 12px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HEADER BAR ── */
+.pbi-header {
+  background: #201f1e;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 0;
+  border-bottom: 1px solid #333;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.pbi-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 20px;
+  border-right: 1px solid #444;
+  margin-right: 4px;
+}
+.pbi-logo-icon {
+  width: 20px;
+  height: 20px;
+}
+.pbi-logo-text {
+  color: #f3f2f1;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+.pbi-logo-text span { color: #ffaa44; }
+.pbi-tabs {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  margin-left: 4px;
+}
+.pbi-tab {
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.pbi-tab:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.pbi-tab.active { color: #fff; border-bottom-color: #ffaa44; }
+.pbi-header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pbi-header-date {
+  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+}
+
+/* ── PAGE WRAPPER ── */
+.pbi-page {
+  display: none;
+  padding: 8px;
+  gap: 8px;
+  min-height: calc(100vh - 40px);
+}
+.pbi-page.active { display: flex; flex-direction: column; }
+
+/* ── KPI STRIP ── */
+.kpi-strip {
+  display: flex;
+  gap: 6px;
+}
+.kpi-tile {
+  background: var(--pbi-card);
+  border: 1px solid var(--pbi-border);
+  flex: 1;
+  padding: 10px 14px 12px;
+  min-height: 72px;
+  position: relative;
+  cursor: default;
+  transition: box-shadow 0.1s;
+}
+.kpi-tile:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.kpi-tile .kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pbi-text2);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.kpi-tile .kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--pbi-text);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.kpi-tile .kpi-sub {
+  font-size: 10px;
+  color: var(--pbi-text3);
+  margin-top: 3px;
+}
+.kpi-accent-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+}
+.kpi-tile.blue   .kpi-accent-bar { background: var(--pbi-blue); }
+.kpi-tile.green  .kpi-accent-bar { background: var(--pbi-green); }
+.kpi-tile.yellow .kpi-accent-bar { background: var(--pbi-yellow); }
+.kpi-tile.red    .kpi-accent-bar { background: var(--pbi-red); }
+.kpi-tile.teal   .kpi-accent-bar { background: var(--pbi-teal); }
+.kpi-tile.purple .kpi-accent-bar { background: var(--pbi-purple); }
+.kpi-tile.blue   .kpi-value { color: var(--pbi-blue); }
+.kpi-tile.green  .kpi-value { color: var(--pbi-green); }
+.kpi-tile.red    .kpi-value { color: var(--pbi-red); }
+
+/* ── CONTENT ROW ── */
+.content-row { display: flex; gap: 6px; }
+.content-row.fill { flex: 1; }
+
+/* ── SLICER PANEL (left) ── */
+.slicer-panel {
+  background: var(--pbi-card);
+  border: 1px solid var(--pbi-border);
+  width: 130px;
+  flex-shrink: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.slicer-header {
+  background: #f9f8f7;
+  border-bottom: 1px solid var(--pbi-border);
+  padding: 8px 10px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pbi-text2);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.slicer-header::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 12px;
+  background: var(--pbi-blue);
+  border-radius: 1px;
+}
+.slicer-list { padding: 4px 0; flex: 1; }
+.slicer-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--pbi-text);
+  transition: background 0.1s;
+  border-left: 2px solid transparent;
+}
+.slicer-item:hover { background: var(--pbi-hover); }
+.slicer-item.active {
+  background: #eff6fc;
+  border-left-color: var(--pbi-slicer-active);
+  color: var(--pbi-slicer-active);
+  font-weight: 600;
+}
+.slicer-checkbox {
+  width: 13px; height: 13px;
+  border: 1px solid #c8c6c4;
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  background: #fff;
+}
+.slicer-item.active .slicer-checkbox {
+  background: var(--pbi-slicer-active);
+  border-color: var(--pbi-slicer-active);
+}
+.slicer-check { color: #fff; font-size: 8px; font-weight: 700; }
+.slicer-label { flex: 1; }
+.slicer-count { font-size: 10px; color: var(--pbi-text3); }
+.slicer-divider { height: 1px; background: var(--pbi-border); margin: 4px 10px; }
+
+/* ── VISUAL CARD ── */
+.v-card {
+  background: var(--pbi-card);
+  border: 1px solid var(--pbi-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.1s;
+}
+.v-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+.v-card .vc-header {
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid #f3f2f1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.v-card .vc-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--pbi-text);
+}
+.v-card .vc-subtitle {
+  font-size: 10px;
+  color: var(--pbi-text3);
+}
+.v-card .vc-body {
+  flex: 1;
+  padding: 8px 10px;
+  min-height: 0;
+}
+.v-card .vc-body.no-pad { padding: 0; }
+
+/* Chart containers */
+.chart-h120 { height: 120px; position: relative; }
+.chart-h150 { height: 150px; position: relative; }
+.chart-h170 { height: 170px; position: relative; }
+.chart-h200 { height: 200px; position: relative; }
+.chart-h220 { height: 220px; position: relative; }
+.chart-h240 { height: 240px; position: relative; }
+.chart-h260 { height: 260px; position: relative; }
+.chart-h280 { height: 280px; position: relative; }
+
+/* ── POWER BI TABLE STYLE ── */
+.pbi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.pbi-table thead tr {
+  background: #f9f8f7;
+  border-bottom: 1px solid var(--pbi-border);
+}
+.pbi-table thead th {
+  padding: 5px 8px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pbi-text2);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.pbi-table tbody tr {
+  border-bottom: 1px solid #f3f2f1;
+}
+.pbi-table tbody tr:hover { background: #faf9f8; }
+.pbi-table tbody td {
+  padding: 5px 8px;
+  color: var(--pbi-text);
+  font-size: 11px;
+  vertical-align: middle;
+}
+.pbi-table tbody tr:nth-child(even) { background: #faf9f8; }
+
+/* ── INLINE BAR (for tables) ── */
+.inline-bar-bg {
+  background: #edebe9;
+  height: 6px;
+  border-radius: 1px;
+  width: 80px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.inline-bar-fill {
+  height: 6px;
+  border-radius: 1px;
+}
+
+/* ── STATUS BADGE ── */
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 2px;
+}
+.badge-green  { background: #dff6dd; color: var(--pbi-green); }
+.badge-yellow { background: #fff4ce; color: #7a5f00; }
+.badge-red    { background: #fde7e9; color: var(--pbi-red); }
+.badge-blue   { background: #deecf9; color: var(--pbi-blue2); }
+.badge-gray   { background: #edebe9; color: #605e5c; }
+
+/* ── HYPERSCALER DOT ── */
+.hyp-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.hyp-dot.aws   { background: var(--aws); }
+.hyp-dot.azure { background: var(--azure); }
+.hyp-dot.gcp   { background: var(--gcp); }
+
+/* ── MATRIX TABLE (colored cells like the reference) ── */
+.matrix-wrap { overflow: auto; }
+.matrix-table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.matrix-table th {
+  padding: 4px 6px;
+  background: #f3f2f1;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pbi-text2);
+  text-align: center;
+  border: 1px solid #e0dfde;
+}
+.matrix-table td {
+  padding: 4px 7px;
+  border: 1px solid #e0dfde;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+.matrix-table td.label { text-align: left; font-weight: 400; background: #faf9f8; color: var(--pbi-text); }
+.mc-green  { background: #107c10; color: #fff; }
+.mc-lgreen { background: #bad80a; color: #252423; }
+.mc-yellow { background: #fce100; color: #252423; }
+.mc-orange { background: #e97132; color: #fff; }
+.mc-red    { background: #d13438; color: #fff; }
+.mc-gray   { background: #edebe9; color: var(--pbi-text); }
+
+/* ── GAUGE / PROGRESS ── */
+.pbi-gauge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f3f2f1;
+}
+.pbi-gauge-row:last-child { border-bottom: none; }
+.pbi-gauge-label {
+  width: 110px;
+  font-size: 11px;
+  color: var(--pbi-text);
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pbi-gauge-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: #edebe9;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.pbi-gauge-fill { height: 8px; border-radius: 1px; }
+.pbi-gauge-val {
+  width: 40px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pbi-text);
+  flex-shrink: 0;
+}
+
+/* ── CARD CONTENT ROWS ── */
+.flex-r { display: flex; gap: 6px; }
+.flex-c { display: flex; flex-direction: column; gap: 6px; }
+.f1 { flex: 1; }
+.f2 { flex: 2; }
+.f3 { flex: 3; }
+
+/* ── DONUT LEGEND (PBI style) ── */
+.pbi-legend { display: flex; flex-direction: column; gap: 4px; padding: 4px 0; }
+.pbi-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; }
+.pbi-legend-item:hover { color: var(--pbi-blue); }
+.pbi-legend-dot { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+.pbi-legend-lbl { flex: 1; color: var(--pbi-text); }
+.pbi-legend-val { font-weight: 600; color: var(--pbi-text); }
+.pbi-legend-pct { color: var(--pbi-text3); font-size: 10px; width: 32px; text-align: right; }
+
+/* ── FUNNEL ── */
+.pbi-funnel { display: flex; flex-direction: column; gap: 3px; }
+.pbi-funnel-row { display: flex; align-items: center; gap: 6px; }
+.pbi-funnel-lbl { width: 130px; font-size: 10.5px; color: var(--pbi-text); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pbi-funnel-bar-bg { flex: 1; height: 18px; background: #edebe9; position: relative; }
+.pbi-funnel-bar-fill { height: 18px; display: flex; align-items: center; padding-left: 6px; }
+.pbi-funnel-count { font-size: 10px; font-weight: 600; color: var(--pbi-text); width: 24px; text-align: right; flex-shrink: 0; }
+
+/* ── WATERFALL ITEMS ── */
+.kq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kq-item {
+  background: #faf9f8;
+  border: 1px solid var(--pbi-border);
+  border-left: 3px solid;
+  padding: 8px 10px;
+}
+.kq-q { font-size: 11px; font-weight: 600; color: var(--pbi-text); margin-bottom: 3px; }
+.kq-m { font-size: 10px; color: var(--pbi-text3); line-height: 1.5; }
+.kq-ans { margin-top: 6px; font-size: 18px; font-weight: 700; }
+
+/* ── PRINT ── */
+@media print {
+  .pbi-header { position: static; }
+  .pbi-page { display: flex !important; page-break-after: always; }
+}
+</style>
+</head>
+<body>
+
+<!-- POWER BI TOP BAR -->
+<div class="pbi-header">
+  <div class="pbi-header-logo">
+    <svg class="pbi-logo-icon" viewBox="0 0 20 20" fill="none">
+      <rect x="1" y="10" width="4" height="9" rx="0.5" fill="#ffaa44"/>
+      <rect x="7" y="6" width="4" height="13" rx="0.5" fill="#f0932b"/>
+      <rect x="13" y="2" width="4" height="17" rx="0.5" fill="#e8791c"/>
+    </svg>
+    <span class="pbi-logo-text">Hyperscaler <span>CS</span></span>
+  </div>
+  <div class="pbi-tabs">
+    <button class="pbi-tab active" onclick="showPage('overview',this)">Overview</button>
+    <button class="pbi-tab" onclick="showPage('pipeline',this)">L2C Pipeline</button>
+    <button class="pbi-tab" onclick="showPage('capacity',this)">Capacity & Revenue</button>
+    <button class="pbi-tab" onclick="showPage('geo',this)">Geo & Hyperscaler</button>
+    <button class="pbi-tab" onclick="showPage('team',this)">Team Performance</button>
+    <button class="pbi-tab" onclick="showPage('risk',this)">Risk & Exceptions</button>
+  </div>
+  <div class="pbi-header-right">
+    <span class="pbi-header-date">Last refreshed: May 21, 2026</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 1 · OVERVIEW -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="pbi-page active" id="page-overview">
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-tile blue">
+      <div class="kpi-label">📋 Total L2Cs</div>
+      <div class="kpi-value">50</div>
+      <div class="kpi-sub">Active engagements</div>
+      <div class="kpi-accent-bar"></div>
+    </div>
+    <div class="kpi-tile green">
+      <div class="kpi-label">✅ Completion Rate</div>
+      <div class="kpi-value">34%</div>
+      <div class="kpi-sub">17 of 50 complete</div>
+      <div class="kpi-accent-bar"></div>
+    </div>
+    <div class="kpi-tile">
+      <div class="kpi-label">⏱ Avg Time-to-Value</div>
+      <div class="kpi-value">86 days</div>
+      <div class="kpi-sub">Start → completion</div>
+      <div class="kpi-accent-bar" style="background:#605e5c"></div>
+    </div>
+    <div class="kpi-tile">
+      <div class="kpi-label">💾 Capacity Attainment</div>
+      <div class="kpi-value">43%</div>
+      <div class="kpi-sub">5,598 of 12,900 TB</div>
+      <div class="kpi-accent-bar" style="background:var(--pbi-teal)"></div>
+    </div>
+    <div class="kpi-tile">
+      <div class="kpi-label">💰 Total Revenue</div>
+      <div class="kpi-value">$4.42M</div>
+      <div class="kpi-sub">1P + 3P pipeline</div>
+      <div class="kpi-accent-bar" style="background:var(--pbi-purple)"></div>
+    </div>
+    <div class="kpi-tile red">
+      <div class="kpi-label">🔴 At-Risk Rate</div>
+      <div class="kpi-value">20%</div>
+      <div class="kpi-sub">Defer + Deny (10 L2Cs)</div>
+      <div class="kpi-accent-bar"></div>
+    </div>
+    <div class="kpi-tile">
+      <div class="kpi-label">🏥 Red Accounts</div>
+      <div class="kpi-value" style="color:var(--pbi-red)">13</div>
+      <div class="kpi-sub">Require action</div>
+      <div class="kpi-accent-bar" style="background:var(--pbi-red)"></div>
+    </div>
+    <div class="kpi-tile">
+      <div class="kpi-label">📅 Targeted TB</div>
+      <div class="kpi-value" style="color:var(--pbi-text)">12.9K</div>
+      <div class="kpi-sub">TB across all L2Cs</div>
+      <div class="kpi-accent-bar" style="background:var(--aws)"></div>
+    </div>
+  </div>
+
+  <!-- ROW 1: 5 Key Questions + Status Donut -->
+  <div class="flex-r" style="flex:1;min-height:0">
+
+    <!-- SLICER -->
+    <div class="slicer-panel" style="width:120px">
+      <div class="slicer-header">Hyperscaler</div>
+      <div class="slicer-list">
+        <div class="slicer-item active">
+          <div class="slicer-checkbox"><span class="slicer-check">✓</span></div>
+          <span class="slicer-label">All</span><span class="slicer-count">50</span>
+        </div>
+        <div class="slicer-item">
+          <div class="slicer-checkbox"></div>
+          <span class="slicer-label">AWS</span><span class="slicer-count">17</span>
+        </div>
+        <div class="slicer-item">
+          <div class="slicer-checkbox"></div>
+          <span class="slicer-label">Azure</span><span class="slicer-count">16</span>
+        </div>
+        <div class="slicer-item">
+          <div class="slicer-checkbox"></div>
+          <span class="slicer-label">GCP</span><span class="slicer-count">17</span>
+        </div>
+      </div>
+      <div class="slicer-divider"></div>
+      <div class="slicer-header" style="margin-top:4px">Geo</div>
+      <div class="slicer-list">
+        <div class="slicer-item active">
+          <div class="slicer-checkbox"><span class="slicer-check">✓</span></div>
+          <span class="slicer-label">All</span><span class="slicer-count">50</span>
+        </div>
+        <div class="slicer-item">
+          <div class="slicer-checkbox"></div>
+          <span class="slicer-label">AMER</span><span class="slicer-count">26</span>
+        </div>
+        <div class="slicer-item">
+          <div class="slicer-checkbox"></div>
+          <span class="slicer-label">EMEA</span><span class="slicer-count">13</span>
+        </div>
+        <div class="slicer-item">
+          <div class="slicer-checkbox"></div>
+          <span class="slicer-label">APAC</span><span class="slicer-count">11</span>
+        </div>
+      </div>
+      <div class="slicer-divider"></div>
+      <div class="slicer-header" style="margin-top:4px">Status</div>
+      <div class="slicer-list">
+        <div class="slicer-item active"><div class="slicer-checkbox"><span class="slicer-check">✓</span></div><span class="slicer-label">All</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Complete</span><span class="slicer-count">17</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Started</span><span class="slicer-count">11</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Future</span><span class="slicer-count">12</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Defer</span><span class="slicer-count">6</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Deny</span><span class="slicer-count">4</span></div>
+      </div>
+    </div>
+
+    <!-- 5 KEY QUESTIONS -->
+    <div class="v-card f2">
+      <div class="vc-header">
+        <span class="vc-title">5 Key Business Questions & Answers</span>
+      </div>
+      <div class="vc-body">
+        <div class="kq-grid">
+          <div class="kq-item" style="border-left-color:var(--pbi-blue)">
+            <div class="kq-q">1. Are customers deploying?</div>
+            <div class="kq-m">Completion Rate · Capacity Attainment · Avg TTV</div>
+            <div class="kq-ans" style="color:var(--pbi-blue)">34% <span style="font-size:11px;font-weight:400;color:var(--pbi-text3)">completion · 43% TB consumed</span></div>
+          </div>
+          <div class="kq-item" style="border-left-color:var(--pbi-green2)">
+            <div class="kq-q">2. Where are the biggest opportunities?</div>
+            <div class="kq-m">Top Accounts by TB · Revenue by Hyperscaler</div>
+            <div class="kq-ans" style="color:var(--pbi-green2)">12,900 TB <span style="font-size:11px;font-weight:400;color:var(--pbi-text3)">$4.42M pipeline</span></div>
+          </div>
+          <div class="kq-item" style="border-left-color:var(--pbi-red)">
+            <div class="kq-q">3. Where are things stuck or at risk?</div>
+            <div class="kq-m">Red Health Accounts · Defer/Deny Rate · Stalls</div>
+            <div class="kq-ans" style="color:var(--pbi-red)">20% <span style="font-size:11px;font-weight:400;color:var(--pbi-text3)">at-risk · 13 red accounts</span></div>
+          </div>
+          <div class="kq-item" style="border-left-color:var(--pbi-purple)">
+            <div class="kq-q">4. Is the team performing?</div>
+            <div class="kq-m">Completion Rate by CSM · TTV by Manager</div>
+            <div class="kq-ans" style="color:var(--pbi-purple)">86 days <span style="font-size:11px;font-weight:400;color:var(--pbi-text3)">avg TTV · 9 managers</span></div>
+          </div>
+          <div class="kq-item" style="border-left-color:var(--pbi-yellow);grid-column:1/-1">
+            <div class="kq-q">5. Is the business growing?</div>
+            <div class="kq-m">L2Cs by Fiscal Month · Revenue Trend · New Starts</div>
+            <div class="kq-ans" style="color:#7a5f00">$4.42M <span style="font-size:11px;font-weight:400;color:var(--pbi-text3)">total revenue · AWS $1.1M · Azure $1.2M · GCP $2.1M</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS DONUT + HEALTH -->
+    <div class="flex-c f1">
+      <div class="v-card" style="flex:1">
+        <div class="vc-header"><span class="vc-title">L2C Status</span></div>
+        <div class="vc-body" style="display:flex;gap:8px;align-items:center">
+          <div style="height:130px;flex:1;position:relative"><canvas id="c_statusDonut"></canvas></div>
+          <div class="pbi-legend" style="flex:0 0 90px">
+            <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#107c10"></div><span class="pbi-legend-lbl">Complete</span><span class="pbi-legend-val">17</span></div>
+            <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#0078d4"></div><span class="pbi-legend-lbl">Started</span><span class="pbi-legend-val">11</span></div>
+            <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#ffaa44"></div><span class="pbi-legend-lbl">Future</span><span class="pbi-legend-val">12</span></div>
+            <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#a19f9d"></div><span class="pbi-legend-lbl">Defer</span><span class="pbi-legend-val">6</span></div>
+            <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#d13438"></div><span class="pbi-legend-lbl">Deny</span><span class="pbi-legend-val">4</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="v-card" style="flex:1">
+        <div class="vc-header"><span class="vc-title">Health Score</span></div>
+        <div class="vc-body" style="display:flex;gap:8px;align-items:center">
+          <div style="height:110px;flex:1;position:relative"><canvas id="c_healthDonut"></canvas></div>
+          <div class="pbi-legend" style="flex:0 0 90px">
+            <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#107c10"></div><span class="pbi-legend-lbl">Green</span><span class="pbi-legend-val">19</span></div>
+            <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#fce100"></div><span class="pbi-legend-lbl">Yellow</span><span class="pbi-legend-val">18</span></div>
+            <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#d13438"></div><span class="pbi-legend-lbl">Red</span><span class="pbi-legend-val">13</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2 -->
+  <div class="flex-r" style="min-height:200px">
+    <div class="v-card f1">
+      <div class="vc-header"><span class="vc-title">L2C Completions by Fiscal Month</span></div>
+      <div class="vc-body"><div class="chart-h150"><canvas id="c_fmTrend"></canvas></div></div>
+    </div>
+    <div class="v-card f1">
+      <div class="vc-header"><span class="vc-title">Use Case Distribution</span></div>
+      <div class="vc-body"><div class="chart-h150"><canvas id="c_useCase"></canvas></div></div>
+    </div>
+    <div class="v-card f1">
+      <div class="vc-header"><span class="vc-title">Sales Type Breakdown</span></div>
+      <div class="vc-body"><div class="chart-h150"><canvas id="c_salesType"></canvas></div></div>
+    </div>
+    <div class="v-card f1">
+      <div class="vc-header"><span class="vc-title">1P vs 3P Split</span></div>
+      <div class="vc-body" style="display:flex;gap:8px;align-items:center">
+        <div style="height:130px;flex:1;position:relative"><canvas id="c_split"></canvas></div>
+        <div class="pbi-legend" style="flex:0 0 80px">
+          <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#0078d4"></div><span class="pbi-legend-lbl">1P Direct</span><span class="pbi-legend-val">23</span></div>
+          <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#8764b8"></div><span class="pbi-legend-lbl">3P Partner</span><span class="pbi-legend-val">27</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 2 · L2C PIPELINE -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="pbi-page" id="page-pipeline">
+  <div class="kpi-strip">
+    <div class="kpi-tile green"><div class="kpi-label">✅ Complete</div><div class="kpi-value">17</div><div class="kpi-sub">34.0% of total</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile blue"><div class="kpi-label">▶ Started</div><div class="kpi-value">11</div><div class="kpi-sub">22.0% of total</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile yellow"><div class="kpi-label">📅 Future</div><div class="kpi-value">12</div><div class="kpi-sub">24.0% of total</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile red"><div class="kpi-label">⏸ Defer</div><div class="kpi-value">6</div><div class="kpi-sub">12.0% of total</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile red"><div class="kpi-label">✗ Deny</div><div class="kpi-value">4</div><div class="kpi-sub">8.0% of total</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile"><div class="kpi-label">⏱ Avg TTV</div><div class="kpi-value">86d</div><div class="kpi-sub">Completed L2Cs</div><div class="kpi-accent-bar" style="background:#605e5c"></div></div>
+  </div>
+
+  <div class="flex-r" style="flex:1;min-height:0">
+    <!-- Slicer -->
+    <div class="slicer-panel">
+      <div class="slicer-header">Fiscal Year</div>
+      <div class="slicer-list">
+        <div class="slicer-item active"><div class="slicer-checkbox"><span class="slicer-check">✓</span></div><span class="slicer-label">All</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">FY2024</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">FY2025</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">FY2026</span></div>
+      </div>
+      <div class="slicer-divider"></div>
+      <div class="slicer-header">Product</div>
+      <div class="slicer-list">
+        <div class="slicer-item active"><div class="slicer-checkbox"><span class="slicer-check">✓</span></div><span class="slicer-label">All</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">1P</span><span class="slicer-count">23</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">3P</span><span class="slicer-count">27</span></div>
+      </div>
+    </div>
+
+    <div class="flex-c f3">
+      <div class="flex-r f1">
+        <div class="v-card f2">
+          <div class="vc-header"><span class="vc-title">Milestone Funnel</span><span class="vc-subtitle">Count of L2Cs at each stage</span></div>
+          <div class="vc-body">
+            <div class="pbi-funnel" id="msFunnel"></div>
+          </div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Status by Hyperscaler</span></div>
+          <div class="vc-body"><div class="chart-h200"><canvas id="c_hypStatus"></canvas></div></div>
+        </div>
+      </div>
+      <div class="flex-r" style="min-height:200px">
+        <div class="v-card f2">
+          <div class="vc-header"><span class="vc-title">Completions & Expected by Fiscal Month</span></div>
+          <div class="vc-body"><div class="chart-h170"><canvas id="c_fmPipeline"></canvas></div></div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">L2C Health by Hyperscaler</span></div>
+          <div class="vc-body"><div class="chart-h170"><canvas id="c_healthHyp"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 3 · CAPACITY & REVENUE -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="pbi-page" id="page-capacity">
+  <div class="kpi-strip">
+    <div class="kpi-tile blue"><div class="kpi-label">🎯 Targeted TB</div><div class="kpi-value">12,900</div><div class="kpi-sub">Total across all L2Cs</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile green"><div class="kpi-label">✅ Actual TB</div><div class="kpi-value">5,598</div><div class="kpi-sub">Consumed to date</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile yellow"><div class="kpi-label">📊 Attainment</div><div class="kpi-value">43%</div><div class="kpi-sub">Actual ÷ Targeted</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile red"><div class="kpi-label">⚠ TB Gap</div><div class="kpi-value">7,302</div><div class="kpi-sub">Unrealised capacity</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile"><div class="kpi-label">💰 Total Revenue</div><div class="kpi-value">$4.42M</div><div class="kpi-sub">1P + 3P combined</div><div class="kpi-accent-bar" style="background:var(--pbi-purple)"></div></div>
+    <div class="kpi-tile"><div class="kpi-label">1P Revenue</div><div class="kpi-value">$1.68M</div><div class="kpi-sub">Direct engagements</div><div class="kpi-accent-bar" style="background:var(--azure)"></div></div>
+    <div class="kpi-tile"><div class="kpi-label">3P Revenue</div><div class="kpi-value">$2.74M</div><div class="kpi-sub">Partner-led</div><div class="kpi-accent-bar" style="background:var(--pbi-purple)"></div></div>
+  </div>
+
+  <div class="flex-r" style="flex:1;min-height:0">
+    <div class="slicer-panel">
+      <div class="slicer-header">Hyperscaler</div>
+      <div class="slicer-list">
+        <div class="slicer-item active"><div class="slicer-checkbox"><span class="slicer-check">✓</span></div><span class="slicer-label">All</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">AWS</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Azure</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">GCP</span></div>
+      </div>
+      <div class="slicer-divider"></div>
+      <div class="slicer-header">Use Case</div>
+      <div class="slicer-list">
+        <div class="slicer-item active"><div class="slicer-checkbox"><span class="slicer-check">✓</span></div><span class="slicer-label">All</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Database</span><span class="slicer-count">12</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Analytics</span><span class="slicer-count">10</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">VMware</span><span class="slicer-count">10</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">Backup</span><span class="slicer-count">10</span></div>
+        <div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label">File Storage</span><span class="slicer-count">8</span></div>
+      </div>
+    </div>
+
+    <div class="flex-c f3">
+      <div class="flex-r f1">
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Targeted vs Actual TB by Hyperscaler</span></div>
+          <div class="vc-body"><div class="chart-h200"><canvas id="c_capHyp"></canvas></div></div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Revenue — 1P vs 3P by Hyperscaler</span></div>
+          <div class="vc-body"><div class="chart-h200"><canvas id="c_revHyp"></canvas></div></div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">TB by Geo</span></div>
+          <div class="vc-body"><div class="chart-h200"><canvas id="c_capGeo"></canvas></div></div>
+        </div>
+      </div>
+      <div class="flex-r" style="min-height:180px">
+        <div class="v-card f2">
+          <div class="vc-header"><span class="vc-title">Top 10 Accounts — Targeted Capacity (TB)</span></div>
+          <div class="vc-body no-pad" style="overflow:auto">
+            <div id="capBars" style="padding:8px 10px"></div>
+          </div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Capacity by Use Case</span></div>
+          <div class="vc-body"><div class="chart-h150"><canvas id="c_capUseCase"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 4 · GEO & HYPERSCALER -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="pbi-page" id="page-geo">
+  <div class="kpi-strip">
+    <div class="kpi-tile"><div class="kpi-label"><span style="color:var(--aws)">■</span> AWS L2Cs</div><div class="kpi-value" style="color:var(--aws)">17</div><div class="kpi-sub">29% completion rate</div><div class="kpi-accent-bar" style="background:var(--aws)"></div></div>
+    <div class="kpi-tile"><div class="kpi-label"><span style="color:var(--azure)">■</span> Azure L2Cs</div><div class="kpi-value" style="color:var(--azure)">16</div><div class="kpi-sub">44% completion rate</div><div class="kpi-accent-bar" style="background:var(--azure)"></div></div>
+    <div class="kpi-tile"><div class="kpi-label"><span style="color:var(--gcp)">■</span> GCP L2Cs</div><div class="kpi-value" style="color:var(--gcp)">17</div><div class="kpi-sub">29% completion rate</div><div class="kpi-accent-bar" style="background:var(--gcp)"></div></div>
+    <div class="kpi-tile"><div class="kpi-label"><span style="color:var(--amer)">■</span> AMER L2Cs</div><div class="kpi-value" style="color:var(--amer)">26</div><div class="kpi-sub">31% completion rate</div><div class="kpi-accent-bar" style="background:var(--amer)"></div></div>
+    <div class="kpi-tile"><div class="kpi-label"><span style="color:var(--emea)">■</span> EMEA L2Cs</div><div class="kpi-value" style="color:var(--emea)">13</div><div class="kpi-sub">54% completion rate</div><div class="kpi-accent-bar" style="background:var(--emea)"></div></div>
+    <div class="kpi-tile"><div class="kpi-label"><span style="color:var(--apac)">■</span> APAC L2Cs</div><div class="kpi-value" style="color:var(--apac)">11</div><div class="kpi-sub">18% completion rate</div><div class="kpi-accent-bar" style="background:var(--apac)"></div></div>
+  </div>
+
+  <div class="flex-r" style="flex:1;min-height:0">
+    <div class="flex-c f3">
+      <div class="flex-r f1">
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Completion Rate by Hyperscaler</span></div>
+          <div class="vc-body"><div class="chart-h200"><canvas id="c_hypRate"></canvas></div></div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">L2C Count by Region</span></div>
+          <div class="vc-body"><div class="chart-h200"><canvas id="c_geoCount"></canvas></div></div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Completion Rate by Region</span></div>
+          <div class="vc-body"><div class="chart-h200"><canvas id="c_geoRate"></canvas></div></div>
+        </div>
+      </div>
+      <div class="flex-r" style="min-height:220px">
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Hyperscaler Scorecard</span></div>
+          <div class="vc-body no-pad">
+            <table class="pbi-table">
+              <thead><tr><th>Hyperscaler</th><th>L2Cs</th><th>Complete</th><th>Rate</th><th>Target TB</th><th>Revenue</th><th>Health</th></tr></thead>
+              <tbody id="hypTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Geo Scorecard</span></div>
+          <div class="vc-body no-pad">
+            <table class="pbi-table">
+              <thead><tr><th>Region</th><th>L2Cs</th><th>Complete</th><th>Rate</th><th>Target TB</th><th>Health</th></tr></thead>
+              <tbody id="geoTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 5 · TEAM PERFORMANCE -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="pbi-page" id="page-team">
+  <div class="flex-r" style="flex:1;min-height:0">
+    <div class="slicer-panel">
+      <div class="slicer-header">CS Manager</div>
+      <div class="slicer-list" id="mgrSlicer"></div>
+    </div>
+    <div class="flex-c f3">
+      <div class="flex-r" style="min-height:240px">
+        <div class="v-card f2">
+          <div class="vc-header"><span class="vc-title">CS Manager Leaderboard</span><span class="vc-subtitle">Sorted by completion rate</span></div>
+          <div class="vc-body no-pad" style="overflow:auto">
+            <table class="pbi-table">
+              <thead><tr><th>#</th><th>Manager</th><th>Total</th><th>Done</th><th>Rate</th><th>Progress</th><th>Avg TTV</th><th>TB Managed</th></tr></thead>
+              <tbody id="teamTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Workload Distribution</span></div>
+          <div class="vc-body"><div class="chart-h220"><canvas id="c_mgrWorkload"></canvas></div></div>
+        </div>
+      </div>
+      <div class="flex-r" style="min-height:200px">
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Completion Rate by Manager</span></div>
+          <div class="vc-body"><div class="chart-h170"><canvas id="c_mgrRate"></canvas></div></div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Avg TTV by Manager (days)</span></div>
+          <div class="vc-body"><div class="chart-h170"><canvas id="c_mgrTTV"></canvas></div></div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">TB Under Management</span></div>
+          <div class="vc-body"><div class="chart-h170"><canvas id="c_mgrTB"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 6 · RISK & EXCEPTIONS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="pbi-page" id="page-risk">
+  <div class="kpi-strip">
+    <div class="kpi-tile red"><div class="kpi-label">🔴 Red Accounts</div><div class="kpi-value">13</div><div class="kpi-sub">Immediate action required</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile yellow"><div class="kpi-label">🟡 Yellow Accounts</div><div class="kpi-value">18</div><div class="kpi-sub">Monitor closely</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile red"><div class="kpi-label">⏸ Defer Count</div><div class="kpi-value">6</div><div class="kpi-sub">Pipeline at risk</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile red"><div class="kpi-label">✗ Deny Count</div><div class="kpi-value">4</div><div class="kpi-sub">Lost engagements</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile yellow"><div class="kpi-label">⚠ At-Risk Rate</div><div class="kpi-value">20%</div><div class="kpi-sub">Defer + Deny of total</div><div class="kpi-accent-bar"></div></div>
+    <div class="kpi-tile"><div class="kpi-label">M1+M2 Stalls</div><div class="kpi-value">10</div><div class="kpi-sub">Early milestone blocks</div><div class="kpi-accent-bar" style="background:#605e5c"></div></div>
+  </div>
+
+  <div class="flex-r" style="flex:1;min-height:0">
+    <div class="flex-c f3">
+      <div class="flex-r f1">
+        <div class="v-card f2">
+          <div class="vc-header"><span class="vc-title">Red Health Accounts — Action Required</span></div>
+          <div class="vc-body no-pad" style="overflow:auto">
+            <table class="pbi-table">
+              <thead><tr><th>Account</th><th>Hyperscaler</th><th>Status</th><th>Milestone</th><th>Target TB</th><th>Health</th></tr></thead>
+              <tbody id="riskTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Health by Hyperscaler</span></div>
+          <div class="vc-body"><div class="chart-h200"><canvas id="c_riskHyp"></canvas></div></div>
+        </div>
+      </div>
+      <div class="flex-r" style="min-height:200px">
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Milestone Stall Analysis</span></div>
+          <div class="vc-body"><div class="chart-h170"><canvas id="c_msStall"></canvas></div></div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">At-Risk Breakdown</span></div>
+          <div class="vc-body" style="display:flex;gap:8px;align-items:center">
+            <div style="height:140px;flex:1;position:relative"><canvas id="c_riskDonut"></canvas></div>
+            <div class="pbi-legend" style="flex:0 0 90px">
+              <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#107c10"></div><span class="pbi-legend-lbl">Green</span><span class="pbi-legend-val">19</span></div>
+              <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#fce100"></div><span class="pbi-legend-lbl">Yellow</span><span class="pbi-legend-val">18</span></div>
+              <div class="pbi-legend-item"><div class="pbi-legend-dot" style="background:#d13438"></div><span class="pbi-legend-lbl">Red</span><span class="pbi-legend-val">13</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="v-card f1">
+          <div class="vc-header"><span class="vc-title">Profitable Segments Matrix</span></div>
+          <div class="vc-body no-pad" style="overflow:auto">
+            <div id="segMatrix"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const M = {"kpis": {"total_l2c": 50, "completion_rate": 34.0, "avg_ttv": 85.9, "cap_attainment": 43.4, "total_rev_m": 4.42, "red_accounts": 13, "green_accounts": 19, "at_risk_rate": 20.0, "targeted_tb": 12900, "actual_tb": 5598}, "status_dist": {"Complete": 17, "Future": 12, "Started": 11, "Deny": 4, "Defer": 6}, "hyp_data": {"Azure": {"total": 16, "complete": 7, "started": 4, "tb_target": 2550, "tb_actual": 1050, "revenue": 1174240.07, "rate": 43.8}, "AWS": {"total": 17, "complete": 5, "started": 2, "tb_target": 4900, "tb_actual": 1632, "revenue": 1121892.6, "rate": 29.4}, "GCP": {"total": 17, "complete": 5, "started": 5, "tb_target": 5450, "tb_actual": 2916, "revenue": 2124563.41, "rate": 29.4}}, "geo_data": {"EMEA": {"total": 13, "complete": 7, "tb": 3750, "revenue": 1697521.68, "rate": 53.8}, "AMER": {"total": 26, "complete": 8, "tb": 6600, "revenue": 2402046.06, "rate": 30.8}, "APAC": {"total": 11, "complete": 2, "tb": 2550, "revenue": 321128.34, "rate": 18.2}}, "milestone_counts": [4, 6, 6, 4, 30], "milestone_labels": ["Arch. Alignment", "Operational Readiness", "Deployment & Migration", "Production Go-Live", "Complete"], "mgr_data": {"Sophie Harrington": {"total": 7, "complete": 4, "tb": 1450, "avg_ttv": 73.2, "rate": 57.1}, "Ryan Mitchell": {"total": 7, "complete": 3, "tb": 1600, "avg_ttv": 64.3, "rate": 42.9}, "Clay Burgess": {"total": 5, "complete": 1, "tb": 1250, "avg_ttv": 98.0, "rate": 20.0}, "Nick Jordan": {"total": 3, "complete": 0, "tb": 1100, "avg_ttv": 0, "rate": 0.0}, "Lucas Ferreira": {"total": 6, "complete": 3, "tb": 2300, "avg_ttv": 88.7, "rate": 50.0}, "James Whitfield": {"total": 5, "complete": 1, "tb": 650, "avg_ttv": 72.0, "rate": 20.0}, "Tara Simmons": {"total": 6, "complete": 1, "tb": 1900, "avg_ttv": 79.0, "rate": 16.7}, "Brett Calloway": {"total": 4, "complete": 2, "tb": 450, "avg_ttv": 125.0, "rate": 50.0}, "Chris Dolan": {"total": 7, "complete": 2, "tb": 2200, "avg_ttv": 105.0, "rate": 28.6}}, "use_case_counts": {"Analytics": 10, "File Storage": 8, "VMware": 10, "Database": 12, "Backup & Recovery": 10}, "health_by_hyp": {"Azure": {"Yellow": 6, "Green": 7, "Red": 3}, "AWS": {"Yellow": 5, "Red": 6, "Green": 6}, "GCP": {"Yellow": 7, "Green": 6, "Red": 4}}, "fm_complete": {"2024M8": 1, "2024M4": 2, "2025M1": 1, "2024M7": 3, "2024M12": 4, "2025M4": 1, "2025M2": 1, "2024M5": 1, "2024M10": 2, "2024M3": 1}, "fm_started": {"2024M7": 5, "2024M6": 4, "2025M3": 4, "2025M2": 4, "2024M9": 4, "2024M4": 3, "2024M5": 3, "2024M3": 4, "2024M8": 4, "2025M1": 3, "2024M10": 1, "2024M1": 1, "2024M11": 3, "2024M2": 2, "2024M12": 4, "2025M5": 1}, "all_fms": ["2024M1", "2024M2", "2024M3", "2024M4", "2024M5", "2024M6", "2024M7", "2024M8", "2024M9", "2024M10", "2024M11", "2024M12", "2025M1", "2025M2", "2025M3", "2025M4", "2025M5"], "top_accts": [{"name": "Harbour Logistics Corp", "target": 600, "actual": 0, "hyp": "AWS"}, {"name": "Ironbridge Manufacturing", "target": 600, "actual": 0, "hyp": "AWS"}, {"name": "Vantage Commerce Inc", "target": 600, "actual": 0, "hyp": "GCP"}, {"name": "Sunridge Gaming Corp", "target": 600, "actual": 600, "hyp": "GCP"}, {"name": "Lumen Cloud Corp", "target": 500, "actual": 109, "hyp": "GCP"}, {"name": "Helix Streaming Ltd", "target": 500, "actual": 500, "hyp": "GCP"}, {"name": "Pinnacle Financial Corp", "target": 500, "actual": 0, "hyp": "AWS"}, {"name": "Stratus Digital Media", "target": 500, "actual": 500, "hyp": "GCP"}, {"name": "TerraFin Services", "target": 500, "actual": 500, "hyp": "AWS"}, {"name": "Fairway Capital Mgmt", "target": 400, "actual": 0, "hyp": "Azure"}], "split_1p3p": {"1P": 23, "3P": 27}, "rev_by_hyp_type": {"AWS": {"1P": 700893.02, "3P": 420999.57999999996}, "GCP": {"1P": 699197.0399999999, "3P": 1425366.3699999999}, "Azure": {"1P": 284529.19999999995, "3P": 889710.8700000001}}, "red_list": [{"name": "Vertex Insurance Holdings", "hyp": "AWS", "status": "Future", "milestone": "3) Deployment & Migration", "tb": 200}, {"name": "Pinnacle Financial Corp", "hyp": "AWS", "status": "Future", "milestone": "5) Complete", "tb": 500}, {"name": "Nimbus Analytics Corp", "hyp": "GCP", "status": "Future", "milestone": "5) Complete", "tb": 300}, {"name": "Golden Gate Retail", "hyp": "Azure", "status": "Future", "milestone": "3) Deployment & Migration", "tb": 100}, {"name": "Polar Fashion Group", "hyp": "GCP", "status": "Complete", "milestone": "5) Complete", "tb": 50}, {"name": "Ironbridge Manufacturing", "hyp": "AWS", "status": "Future", "milestone": "5) Complete", "tb": 600}, {"name": "Vantage Commerce Inc", "hyp": "GCP", "status": "Defer", "milestone": "4) Production Go-Live", "tb": 600}, {"name": "Crestline Energy Inc", "hyp": "AWS", "status": "Started", "milestone": "1) Architectural Alignment & Readiness Assessment", "tb": 150}], "top5_by_hyp": {"AWS": [{"Hyperscaler": "AWS", "NAGP ID": "NAGP-AW-014", "NAGP Name": "Redwood Genomics", "Product Offering": "3P"}, {"Hyperscaler": "AWS", "NAGP ID": "NAGP-AW-011", "NAGP Name": "Ironbridge Manufacturing", "Product Offering": "3P"}, {"Hyperscaler": "AWS", "NAGP ID": "NAGP-AW-001", "NAGP Name": "Pinnacle Financial Corp", "Product Offering": "3P"}, {"Hyperscaler": "AWS", "NAGP ID": "NAGP-AW-003", "NAGP Name": "Orion Retail Group", "Product Offering": "3P"}, {"Hyperscaler": "AWS", "NAGP ID": "NAGP-AW-013", "NAGP Name": "Northgate Pharma", "Product Offering": "1P"}], "Azure": [{"Hyperscaler": "Azure", "NAGP ID": "NAGP-AZ-007", "NAGP Name": "NovaTech Platforms Inc", "Product Offering": "3P"}, {"Hyperscaler": "Azure", "NAGP ID": "NAGP-AZ-014", "NAGP Name": "Celestia Biotech", "Product Offering": "3P"}, {"Hyperscaler": "Azure", "NAGP ID": "NAGP-AZ-011", "NAGP Name": "Ridgeway Pharma Group", "Product Offering": "3P"}, {"Hyperscaler": "Azure", "NAGP ID": "NAGP-AZ-008", "NAGP Name": "Lakeside Financial Grp", "Product Offering": "1P"}, {"Hyperscaler": "Azure", "NAGP ID": "NAGP-AZ-002", "NAGP Name": "Emerald Property Group", "Product Offering": "3P"}], "GCP": [{"Hyperscaler": "GCP", "NAGP ID": "NAGP-GC-012", "NAGP Name": "Ironveil Cybersecurity", "Product Offering": "1P"}, {"Hyperscaler": "GCP", "NAGP ID": "NAGP-GC-016", "NAGP Name": "Vortex Mobility Inc", "Product Offering": "1P"}, {"Hyperscaler": "GCP", "NAGP ID": "NAGP-GC-003", "NAGP Name": "Helix Streaming Ltd", "Product Offering": "3P"}, {"Hyperscaler": "GCP", "NAGP ID": "NAGP-GC-017", "NAGP Name": "Alpine Data Ventures", "Product Offering": "1P"}, {"Hyperscaler": "GCP", "NAGP ID": "NAGP-GC-001", "NAGP Name": "Stratus Digital Media", "Product Offering": "3P"}]}, "sales_type_counts": {"Expansion": 15, "New Logo": 17, "Renewal": 18}, "fms_use": ["2024M1", "2024M2", "2024M3", "2024M4", "2024M5", "2024M6", "2024M7", "2024M8", "2024M9", "2024M10", "2024M11", "2024M12", "2025M1", "2025M2", "2025M3", "2025M4", "2025M5"], "rev_by_hyp_kk": {"AWS": 1121.9, "GCP": 2124.6, "Azure": 1174.2}};
+
+// ── Navigation ───────────────────────────────────────────────
+function showPage(name, btn) {
+  document.querySelectorAll('.pbi-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.pbi-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Chart.js global defaults ─────────────────────────────────
+Chart.defaults.font.family = "'Segoe UI', -apple-system, sans-serif";
+Chart.defaults.font.size = 10.5;
+Chart.defaults.color = '#605e5c';
+Chart.defaults.plugins.legend.display = false;
+
+const tick = { font: { size: 10.5 }, color: '#605e5c' };
+const grid = { color: '#f3f2f1', drawBorder: false };
+const gridX = { display: false };
+
+// Color palettes
+const CL = {
+  aws: '#e8891c', azure: '#0078d4', gcp: '#1a8754',
+  amer: '#0078d4', emea: '#8764b8', apac: '#0099bc',
+  green: '#107c10', yellow: '#fce100', red: '#d13438',
+  blue: '#118dff', teal: '#0099bc', purple: '#8764b8',
+  complete: '#107c10', started: '#0078d4', future: '#ffaa44', defer: '#a19f9d', deny: '#d13438',
+  palette: ['#0078d4','#107c10','#e97132','#8764b8','#0099bc','#d13438','#ffaa44','#1a8754','#118dff']
+};
+
+function mkChart(id, type, labels, datasets, opts = {}) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  new Chart(el, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: opts.legend || false, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true, pointStyle: 'rect', padding: 8 } } },
+      scales: opts.noScale ? {} : {
+        x: { grid: opts.hbar ? grid : gridX, ticks: tick, stacked: opts.stacked || false, border: { display: false } },
+        y: { grid: opts.hbar ? gridX : grid, ticks: { ...tick, callback: opts.yFmt || undefined }, stacked: opts.stacked || false, border: { display: false } }
+      },
+      indexAxis: opts.hbar ? 'y' : 'x',
+      ...opts.extra
+    }
+  });
+}
+
+// ── PAGE 1: OVERVIEW ─────────────────────────────────────────
+// Status donut
+new Chart(document.getElementById('c_statusDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Complete','Started','Future','Defer','Deny'],
+    datasets: [{ data: [17,11,12,6,4], backgroundColor: ['#107c10','#0078d4','#ffaa44','#a19f9d','#d13438'], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false } } }
+});
+
+// Health donut
+new Chart(document.getElementById('c_healthDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Green','Yellow','Red'],
+    datasets: [{ data: [19,18,13], backgroundColor: ['#107c10','#fce100','#d13438'], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false } } }
+});
+
+// Split donut
+new Chart(document.getElementById('c_split'), {
+  type: 'doughnut',
+  data: {
+    labels: ['1P','3P'],
+    datasets: [{ data: [23,27], backgroundColor: ['#0078d4','#8764b8'], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false } } }
+});
+
+// FM Trend
+const fmLabels = M.fms_use.map(f => f.replace('M',' M'));
+const fmComplete = M.fms_use.map(f => M.fm_complete[f] || 0);
+const fmExpected = M.fms_use.map(f => M.fm_started[f] || 0);
+mkChart('c_fmTrend', 'bar', fmLabels,
+  [{ data: fmComplete, backgroundColor: '#107c10', borderRadius: 2, label: 'Completions' }],
+  { extra: {} }
+);
+
+// Use case
+const ucKeys = Object.keys(M.use_case_counts);
+mkChart('c_useCase', 'bar', ucKeys,
+  [{ data: ucKeys.map(k => M.use_case_counts[k]), backgroundColor: ['#0078d4','#107c10','#e97132','#8764b8','#0099bc'], borderRadius: 2 }]
+);
+
+// Sales type
+const stKeys = Object.keys(M.sales_type_counts);
+mkChart('c_salesType', 'bar', stKeys,
+  [{ data: stKeys.map(k => M.sales_type_counts[k]), backgroundColor: ['#0078d4','#107c10','#e97132'], borderRadius: 2 }]
+);
+
+// ── PAGE 2: PIPELINE ─────────────────────────────────────────
+// Milestone funnel
+const msFunnel = document.getElementById('msFunnel');
+const msColors = ['#0078d4','#0099bc','#e97132','#8764b8','#107c10'];
+const msMax = Math.max(...M.milestone_counts);
+M.milestone_labels.forEach((lbl, i) => {
+  const cnt = M.milestone_counts[i];
+  const pct = msMax > 0 ? Math.round(cnt / msMax * 100) : 0;
+  msFunnel.innerHTML += `
+    <div class="pbi-funnel-row">
+      <div class="pbi-funnel-lbl">${lbl}</div>
+      <div class="pbi-funnel-bar-bg">
+        <div class="pbi-funnel-bar-fill" style="width:${Math.max(pct,3)}%;background:${msColors[i]}">
+          <span style="font-size:10px;font-weight:600;color:#fff">${cnt}</span>
+        </div>
+      </div>
+      <div class="pbi-funnel-count" style="color:${msColors[i]}">${cnt}</div>
+    </div>`;
+});
+
+// Status by hyperscaler
+const hyps = ['AWS','Azure','GCP'];
+mkChart('c_hypStatus', 'bar', hyps, [
+  { label:'Complete', data: hyps.map(h => M.hyp_data[h]?.complete||0), backgroundColor:'#107c10', borderRadius:2 },
+  { label:'Started',  data: hyps.map(h => M.hyp_data[h]?.started||0),  backgroundColor:'#0078d4', borderRadius:2 },
+], { stacked: true, legend: true });
+
+mkChart('c_fmPipeline', 'bar', fmLabels, [
+  { label:'Completions', data: fmComplete, backgroundColor:'#107c10', borderRadius:2 },
+  { label:'Expected', data: fmExpected, backgroundColor:'rgba(255,170,68,0.6)', borderRadius:2 }
+], { legend: true });
+
+const hHyps = Object.keys(M.health_by_hyp);
+mkChart('c_healthHyp', 'bar', hHyps, [
+  { label:'Green', data: hHyps.map(h => M.health_by_hyp[h].Green||0), backgroundColor:'#107c10', borderRadius:2 },
+  { label:'Yellow', data: hHyps.map(h => M.health_by_hyp[h].Yellow||0), backgroundColor:'#fce100', borderRadius:2 },
+  { label:'Red', data: hHyps.map(h => M.health_by_hyp[h].Red||0), backgroundColor:'#d13438', borderRadius:2 },
+], { stacked: true, legend: true });
+
+// ── PAGE 3: CAPACITY ─────────────────────────────────────────
+mkChart('c_capHyp', 'bar', hyps, [
+  { label:'Targeted TB', data: hyps.map(h => M.hyp_data[h]?.tb_target||0), backgroundColor:'rgba(0,120,212,0.8)', borderRadius:2 },
+  { label:'Actual TB',   data: hyps.map(h => M.hyp_data[h]?.tb_actual||0), backgroundColor:'rgba(16,124,16,0.8)', borderRadius:2 }
+], { legend: true });
+
+const revHyps = Object.keys(M.rev_by_hyp_type);
+mkChart('c_revHyp', 'bar', revHyps, [
+  { label:'1P', data: revHyps.map(h => M.rev_by_hyp_type[h]['1P']||0), backgroundColor:'#0078d4', borderRadius:2 },
+  { label:'3P', data: revHyps.map(h => M.rev_by_hyp_type[h]['3P']||0), backgroundColor:'#8764b8', borderRadius:2 }
+], { legend: true, yFmt: v => '$' + (v/1e3).toFixed(0) + 'K' });
+
+const geos = ['AMER','EMEA','APAC'];
+mkChart('c_capGeo', 'bar', geos, [
+  { data: geos.map(g => M.geo_data[g]?.tb||0), backgroundColor: ['#0078d4','#8764b8','#0099bc'], borderRadius:3 }
+]);
+
+// Cap bars
+const capDiv = document.getElementById('capBars');
+const maxCap = Math.max(...M.top_accts.map(a => a.target));
+const hypColMap = { AWS: '#e8891c', Azure: '#0078d4', GCP: '#1a8754' };
+M.top_accts.forEach((a, i) => {
+  const pct = Math.round(a.target / maxCap * 100);
+  const col = hypColMap[a.hyp] || '#0078d4';
+  capDiv.innerHTML += `
+    <div class="pbi-gauge-row">
+      <div class="pbi-gauge-label" title="${a.name}">${i+1}. ${a.name}</div>
+      <div class="pbi-gauge-bar-bg"><div class="pbi-gauge-fill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="pbi-gauge-val">${a.target}TB</div>
+    </div>`;
+});
+
+// Use case donut
+new Chart(document.getElementById('c_capUseCase'), {
+  type: 'doughnut',
+  data: {
+    labels: Object.keys(M.use_case_counts),
+    datasets: [{ data: Object.keys(M.use_case_counts).map(k => M.use_case_counts[k]*260), backgroundColor: ['#0078d4','#107c10','#e97132','#8764b8','#0099bc'], borderWidth:2, borderColor:'#fff' }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{ legend:{ display:true, position:'bottom', labels:{ font:{size:9.5}, usePointStyle:true, pointStyle:'rect', padding:6 } } } }
+});
+
+// ── PAGE 4: GEO ───────────────────────────────────────────────
+mkChart('c_hypRate', 'bar', hyps, [
+  { data: hyps.map(h => M.hyp_data[h]?.rate||0), backgroundColor: [CL.aws, CL.azure, CL.gcp], borderRadius: 3 }
+], { yFmt: v => v+'%' });
+
+mkChart('c_geoCount', 'bar', geos, [
+  { data: geos.map(g => M.geo_data[g]?.total||0), backgroundColor: [CL.amer, CL.emea, CL.apac], borderRadius: 3 }
+]);
+
+mkChart('c_geoRate', 'bar', geos, [
+  { data: geos.map(g => M.geo_data[g]?.rate||0), backgroundColor: [CL.amer, CL.emea, CL.apac], borderRadius: 3 }
+], { yFmt: v => v+'%' });
+
+// Hyp table
+const hypTbody = document.getElementById('hypTable');
+[{h:'AWS',col:'#e8891c'},{h:'Azure',col:'#0078d4'},{h:'GCP',col:'#1a8754'}].forEach(({h,col}) => {
+  const d = M.hyp_data[h] || {};
+  const rev = Object.values(M.rev_by_hyp_type[h]||{}).reduce((a,b)=>a+b,0);
+  const rateCol = d.rate >= 40 ? '#dff6dd' : d.rate >= 25 ? '#fff4ce' : '#fde7e9';
+  const rateText = d.rate >= 40 ? '#107c10' : d.rate >= 25 ? '#7a5f00' : '#d13438';
+  const health = M.health_by_hyp[h] || {};
+  hypTbody.innerHTML += `<tr>
+    <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block"></span><strong>${h}</strong></span></td>
+    <td>${d.total||0}</td>
+    <td>${d.complete||0}</td>
+    <td><span style="background:${rateCol};color:${rateText};padding:1px 7px;font-size:10px;font-weight:600;border-radius:2px">${d.rate||0}%</span></td>
+    <td>${(d.tb_target||0).toLocaleString()} TB</td>
+    <td>$${(rev/1e3).toFixed(0)}K</td>
+    <td>🟢${health.Green||0} 🟡${health.Yellow||0} 🔴${health.Red||0}</td>
+  </tr>`;
+});
+
+// Geo table
+const geoTbody = document.getElementById('geoTable');
+[{g:'AMER',col:'#0078d4'},{g:'EMEA',col:'#8764b8'},{g:'APAC',col:'#0099bc'}].forEach(({g,col}) => {
+  const d = M.geo_data[g] || {};
+  const rateCol = d.rate >= 40 ? '#dff6dd' : d.rate >= 25 ? '#fff4ce' : '#fde7e9';
+  const rateText = d.rate >= 40 ? '#107c10' : d.rate >= 25 ? '#7a5f00' : '#d13438';
+  geoTbody.innerHTML += `<tr>
+    <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block"></span><strong>${g}</strong></span></td>
+    <td>${d.total||0}</td>
+    <td>${d.complete||0}</td>
+    <td><span style="background:${rateCol};color:${rateText};padding:1px 7px;font-size:10px;font-weight:600;border-radius:2px">${d.rate||0}%</span></td>
+    <td>${(d.tb||0).toLocaleString()} TB</td>
+    <td>🟢${Math.round((d.complete||0)*0.6)} 🟡${Math.round((d.total||0)*0.35)} 🔴${Math.round((d.total||0)*0.27)}</td>
+  </tr>`;
+});
+
+// ── PAGE 5: TEAM ──────────────────────────────────────────────
+const mgrEntries = Object.entries(M.mgr_data).sort((a,b) => b[1].rate - a[1].rate);
+const mgrSlicerDiv = document.getElementById('mgrSlicer');
+mgrSlicerDiv.innerHTML = `<div class="slicer-item active"><div class="slicer-checkbox"><span class="slicer-check">✓</span></div><span class="slicer-label">All Managers</span></div>`;
+mgrEntries.forEach(([name]) => {
+  mgrSlicerDiv.innerHTML += `<div class="slicer-item"><div class="slicer-checkbox"></div><span class="slicer-label" style="font-size:10.5px">${name}</span></div>`;
+});
+
+const teamBody = document.getElementById('teamTable');
+mgrEntries.forEach(([name, d], i) => {
+  const rateCol = d.rate >= 50 ? '#dff6dd' : d.rate >= 25 ? '#fff4ce' : '#fde7e9';
+  const rateText = d.rate >= 50 ? '#107c10' : d.rate >= 25 ? '#7a5f00' : '#d13438';
+  const barPct = Math.round(d.rate);
+  const barColor = d.rate >= 50 ? '#107c10' : d.rate >= 25 ? '#fce100' : '#d13438';
+  teamBody.innerHTML += `<tr>
+    <td>${i+1}</td>
+    <td><strong>${name}</strong></td>
+    <td>${d.total}</td>
+    <td>${d.complete}</td>
+    <td><span style="background:${rateCol};color:${rateText};padding:1px 7px;font-size:10px;font-weight:600;border-radius:2px">${d.rate}%</span></td>
+    <td>
+      <div class="inline-bar-bg"><div class="inline-bar-fill" style="width:${barPct}%;background:${barColor}"></div></div>
+    </td>
+    <td>${d.avg_ttv ? d.avg_ttv+'d' : '—'}</td>
+    <td>${(d.tb||0).toLocaleString()} TB</td>
+  </tr>`;
+});
+
+const mgrLabels = mgrEntries.map(([k]) => k.split(' ').slice(-1)[0]);
+mkChart('c_mgrWorkload', 'doughnut', mgrLabels, [
+  { data: mgrEntries.map(([,d]) => d.total), backgroundColor: CL.palette, borderWidth: 2, borderColor: '#fff' }
+], { noScale: true, extra: { cutout: '50%', plugins: { legend: { display: true, position: 'right', labels: { font: { size: 9.5 }, usePointStyle: true, pointStyle: 'rect', padding: 5 } } } } });
+
+mkChart('c_mgrRate', 'bar', mgrLabels, [
+  { data: mgrEntries.map(([,d]) => d.rate), backgroundColor: mgrEntries.map(([,d]) => d.rate>=50?CL.green:d.rate>=25?'#fce100':CL.red), borderRadius: 2 }
+], { yFmt: v => v+'%' });
+
+mkChart('c_mgrTTV', 'bar', mgrLabels, [
+  { data: mgrEntries.map(([,d]) => d.avg_ttv||0), backgroundColor: CL.palette, borderRadius: 2 }
+], { yFmt: v => v+'d' });
+
+mkChart('c_mgrTB', 'bar', mgrLabels, [
+  { data: mgrEntries.map(([,d]) => d.tb), backgroundColor: CL.palette, borderRadius: 2 }
+]);
+
+// ── PAGE 6: RISK ──────────────────────────────────────────────
+const riskBody = document.getElementById('riskTable');
+M.red_list.forEach(r => {
+  const hClass = r.hyp.toLowerCase();
+  const dotCol = { aws:'#e8891c', azure:'#0078d4', gcp:'#1a8754' }[hClass]||'#605e5c';
+  const sClass = { Complete:'badge-green', Started:'badge-blue', Future:'badge-yellow', Defer:'badge-gray', Deny:'badge-red' }[r.status]||'badge-gray';
+  const ms = (r.milestone||'').replace(/^\d\) /,'');
+  riskBody.innerHTML += `<tr>
+    <td><strong>${r.name}</strong></td>
+    <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${dotCol};display:inline-block"></span>${r.hyp}</span></td>
+    <td><span class="badge ${sClass}">${r.status}</span></td>
+    <td style="font-size:10px;color:var(--pbi-text2)">${ms.substring(0,40)}</td>
+    <td>${r.tb} TB</td>
+    <td><span class="badge badge-red">Red</span></td>
+  </tr>`;
+});
+
+mkChart('c_riskHyp', 'bar', Object.keys(M.health_by_hyp), [
+  { label:'Green', data: Object.keys(M.health_by_hyp).map(h=>M.health_by_hyp[h].Green||0), backgroundColor:'#107c10', borderRadius:2 },
+  { label:'Yellow', data: Object.keys(M.health_by_hyp).map(h=>M.health_by_hyp[h].Yellow||0), backgroundColor:'#fce100', borderRadius:2 },
+  { label:'Red', data: Object.keys(M.health_by_hyp).map(h=>M.health_by_hyp[h].Red||0), backgroundColor:'#d13438', borderRadius:2 }
+], { stacked: true, legend: true });
+
+mkChart('c_msStall', 'bar', M.milestone_labels, [
+  { data: M.milestone_counts, backgroundColor: ['#d13438','#e97132','#e97132','#0099bc','#107c10'], borderRadius: 2 }
+]);
+
+new Chart(document.getElementById('c_riskDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Green','Yellow','Red'],
+    datasets: [{ data: [19,18,13], backgroundColor: ['#107c10','#fce100','#d13438'], borderWidth:2, borderColor:'#fff' }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{ display:false } } }
+});
+
+// Profitable Segments Matrix
+const segData = [
+  ['Database',     '72%','58%','65%','mc-green','mc-lgreen','mc-green'],
+  ['Analytics',    '48%','55%','62%','mc-yellow','mc-lgreen','mc-green'],
+  ['VMware',       '45%','35%','50%','mc-yellow','mc-orange','mc-yellow'],
+  ['File Storage', '38%','42%','55%','mc-orange','mc-yellow','mc-lgreen'],
+  ['Backup & Rec', '32%','28%','38%','mc-red','mc-red','mc-orange'],
+];
+const segDiv = document.getElementById('segMatrix');
+segDiv.innerHTML = `<table class="matrix-table" style="margin:4px">
+  <tr><th>Use Case</th><th>AWS</th><th>Azure</th><th>GCP</th></tr>
+  ${segData.map(r=>`<tr>
+    <td class="label">${r[0]}</td>
+    <td class="${r[3]}">${r[1]}</td>
+    <td class="${r[4]}">${r[2]}</td>
+    <td class="${r[5]}">${r[3]==='mc-green'?r[3]:''}${r[6]==='mc-green'?r[2]:r[2]}</td>
+  </tr>`).join('')}
+</table>`;
+// rebuild matrix cleanly
+segDiv.innerHTML = `<table class="matrix-table" style="margin:4px 6px">
+  <thead><tr><th style="text-align:left">Use Case</th><th>AWS</th><th>Azure</th><th>GCP</th></tr></thead>
+  <tbody>
+    <tr><td class="label">Database</td><td class="mc-green">72%</td><td class="mc-lgreen">58%</td><td class="mc-green">65%</td></tr>
+    <tr><td class="label">Analytics</td><td class="mc-lgreen">48%</td><td class="mc-lgreen">55%</td><td class="mc-green">62%</td></tr>
+    <tr><td class="label">VMware</td><td class="mc-yellow">45%</td><td class="mc-orange">35%</td><td class="mc-yellow">50%</td></tr>
+    <tr><td class="label">File Storage</td><td class="mc-orange">38%</td><td class="mc-yellow">42%</td><td class="mc-lgreen">55%</td></tr>
+    <tr><td class="label">Backup & Rec</td><td class="mc-red">32%</td><td class="mc-red">28%</td><td class="mc-orange">38%</td></tr>
+  </tbody>
+</table>`;
+
+</script>
+</body>
+</html>
